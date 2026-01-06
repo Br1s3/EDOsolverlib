@@ -1,5 +1,5 @@
 #include <math.h>
-#include "EDOsolver.h"
+#include "ODEsolver.h"
 
 
 int methode_euler_explicite(const double dt, double t, double *x, double *v, double (*f)(double, double, double))

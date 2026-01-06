@@ -8,24 +8,24 @@ CFLAGS +=	\
 
 .PHONY: clean static dyn
 
-static: main.c | libEDOsolver.a
-	gcc main.c -o main -L. -lEDOsolver $(CFLAGS)
+static: main.c | libODEsolver.a
+	gcc main.c -o main -L. -lODEsolver $(CFLAGS)
 
-libEDOsolver.a: EDOsolver.c
-	$(CC) $(CFLAGS) -c EDOsolver.c
-	ar -cvq libEDOsolver.a EDOsolver.o
-	@ar -t libEDOsolver.a
+libODEsolver.a: ODEsolver.c
+	$(CC) $(CFLAGS) -c ODEsolver.c
+	ar -cvq libODEsolver.a ODEsolver.o
+	@ar -t libODEsolver.a
 
 
 # Pour lancer le main si pas "-Wl,-rpath=./"
 # LD_LIBRARY_PATH="./" ./main
 
-dyn: main.c | libEDOsolver.so
-	gcc main.c -o main $(CFLAGS) -L. -lEDOsolver -Wl,-rpath=./
+dyn: main.c | libODEsolver.so
+	gcc main.c -o main $(CFLAGS) -L. -lODEsolver -Wl,-rpath=./
 
 
-libEDOsolver.so: EDOsolver.c
-	$(CC) $(CFLAGS) -fPIC -shared -o libEDOsolver.so EDOsolver.c
+libODEsolver.so: ODEsolver.c
+	$(CC) $(CFLAGS) -fPIC -shared -o libODEsolver.so ODEsolver.c
 
 clean:
 	$(RM) *.o
