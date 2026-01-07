@@ -21,7 +21,7 @@ int methode_Verlet(const double h, double t, double *x, double *v, double (*f)(d
 // } Derive_temp;
 
 // int methode_RK_row(const int q, Derive_temp P[q], const double A[][q], const double *B, const double *C, const double h, double t, double *x, double *v, double (*f)(double, double, double));
-int methode_DOPRI45(double stepSize, double *Time, double err, double *x, double *v, double (*f)(double, double, double));
+int methode_DOPRI45(double stepSize, double Time, double err, double *x, double *v, double (*f)(double, double, double));
 
 
 #endif //SIMULTAION_NUMERIQUE_H_INCLUED

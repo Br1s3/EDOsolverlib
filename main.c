@@ -113,10 +113,10 @@ int main(int argc, char *argv[])
     }
 
     // DOPRI45 modify the time itself to obtain a better accuracy
-    for (double step = 0, t = 0, y = 1; step < (int)1.f/dt; step++) {
+    for (double step = 0, t = 0, y = 1; step < (int)1.f/dt; step++, t += dt) {
 	t_buff[6][(int)step] = t;
 	y_buff[6][(int)step] = y;
-	if (methode_DOPRI45(dt, &t, 0.001, &tmp, &y, stiff_equation) < 0)
+	if (methode_DOPRI45(dt, t, 0.001, &tmp, &y, stiff_equation) < 0)
 	     fprintf(stderr, "ERROR: Computes methode_DOPRI45\n");
     }
 

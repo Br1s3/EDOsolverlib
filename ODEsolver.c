@@ -13,7 +13,6 @@ int methode_euler_explicite(const double dt, double t, double *x, double *v, dou
     return 0;
 }
 
-
 int methode_euler_simpletique(const double dt, double t, double *x, double *v, double (*f)(double, double, double))
 {
     if (isnan(*v)) return -1;
@@ -23,7 +22,6 @@ int methode_euler_simpletique(const double dt, double t, double *x, double *v, d
     (*x) = dt*(*v) + (*x);               // x(t+1) = dt*v(t+1) + x(t)
     return 0;
 }
-
 
 int methode_RK4(const double h, double t, double *x, double *v, double (*f)(double, double, double))
 {
@@ -64,7 +62,6 @@ int methode_RK4(const double h, double t, double *x, double *v, double (*f)(doub
 
     return 0;
 }
-
 
 int methode_RK(const double h, double t, double *x, double *v, double (*f)(double, double, double))
 {
@@ -125,7 +122,6 @@ int methode_RK(const double h, double t, double *x, double *v, double (*f)(doubl
     return 0;
 }
 
-
 int methode_Verlet(const double h, double t, double *x, double *v, double (*f)(double, double, double))
 {
     struct
@@ -162,6 +158,9 @@ typedef struct
     double vn;
     double an;
 } Derive_temp;
+
+
+
 
 int methode_RK_row(const int q, Derive_temp P[q], const double A[][q], const double *B, const double *C, const double h, double t, double *x, double *v, double (*f)(double, double, double))
 {
@@ -201,7 +200,9 @@ int methode_RK_row(const int q, Derive_temp P[q], const double A[][q], const dou
     return 0;
 }
 
-int methode_DOPRI45(double stepSize, double *Time, double err, double *x, double *v, double (*f)(double, double, double))
+// Change my mind by not modifying the *Time variable.
+// But let in comment the way to go back
+int methode_DOPRI45(double stepSize, double Time, double err, double *x, double *v, double (*f)(double, double, double))
 {
 #ifndef q
 # define q 7
@@ -233,7 +234,8 @@ int methode_DOPRI45(double stepSize, double *Time, double err, double *x, double
     double bx = (*x);
     double bv = (*v);
     double TE = 0;
-    double startTime = (*Time);
+    double startTime = Time;
+    // double startTime = (*Time);
     int firstTime = 1;
     const double ErreurDebut = err;
     double DernierDifErreur = 10e10;
@@ -247,7 +249,7 @@ int methode_DOPRI45(double stepSize, double *Time, double err, double *x, double
     {
 	double t = startTime;
 	if (!firstTime) {
-	    (*Time) = startTime;
+	    // (*Time) = startTime;
 	    (*x) = bx;
 	    (*v) = bv;
 	    dt = 0.1f * (dt) * pow(err/TE, 1.f/q);
@@ -262,7 +264,7 @@ int methode_DOPRI45(double stepSize, double *Time, double err, double *x, double
 	    pas++;
 
 	    if (methode_RK_row(q, P, A, B5, C, h, t, x, v, f) < 0) return -1;
-	    (*Time) = t;
+	    // (*Time) = t;
 	    t = t + h;
 
 	    if (pas > (stepSize/dt + 2)) return -1;
