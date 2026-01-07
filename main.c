@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <math.h>
 #include "ODEsolver.h"
 
@@ -25,10 +26,13 @@ double solution_stiff_equation(double t)
     return exp(-15.f*t);
 }
 
-double stiff_equation_o1(double t, double y)
+int sol_stiff_equ_format(const double dt, double t, double *x, double *v, double (*f)(double, double, double))
 {
-    UNUSED(t);
-    return -15.f*y;
+    UNUSED(dt);
+    UNUSED(x);
+    UNUSED(f);
+    (*v) = exp(-15.f*t);
+    return 0;
 }
 
 double stiff_equation(double t, double y, double dy)
@@ -39,59 +43,102 @@ double stiff_equation(double t, double y, double dy)
 }
 
 
-int main()
+int main(int argc, char *argv[])
 {
+    argc--; argv++;
+    int save_file = 0;
+    int res = -1;
+    FILE *streamout = stdout;
 
-    double t = 0;
+    if (argc == 1) res = atoi(argv[0]);
+    switch (res)
+    {
+	case 0:
+	    printf("WARNING: Wrong argument. Default out stdout\n");
+	    break;
+	case 1:
+	    printf("INFO: Output results chosen files\n");
+	    save_file = 1;
+	    break;
+	case 2:
+	    printf("INFO: Output results chosen stdout\n");
+	    break;
+	default:
+	    printf("INFO: No output results chosen. Default out stdout\n");
+	    break;
+
+    }
+
     const double dt = 1.f/10.f;
-    double t2 = 0;
 
-    double y_EMe = 1;
-    double y_EMs = 1;
-    double y_RK4 = 1;
-    double y_RK = 1;
-    double y_VT = 1;
-    double y_DOPRI45 = 1;
+    int (*method[7])(const double dt, double t, double *x, double *v, double (*f)(double, double, double)) = {
+	sol_stiff_equ_format,
+	methode_euler_explicite,
+	methode_euler_simpletique,
+	methode_RK4,
+	methode_RK,
+	methode_Verlet
+    };
+
+    char all_names_methods[7][31] = {
+	"Exact solution",
+	"Explicit Euler method",
+	"Semi-implicite Euler method",
+	"Runge-Kutta 4 method",
+	"Runge-Kutta (free ceof) method",
+	"Verlet method",
+	"DOPRI45 method"
+    };
 
     double tmp;
 
-    for (int step = 0; step < (int)1.f/dt; step++) {
-	printf("%lf,%lf,%lf,%lf,%lf,%lf,%lf\n", t, solution_stiff_equation(t), y_EMe, y_EMs, y_RK4, y_RK, y_VT);
+    double y_buff[7][(int)(1.f/dt)+1];
+    double t_buff[7][(int)(1.f/dt)+1];
 
-	if (methode_euler_explicite(dt, t, &tmp, &y_EMe, stiff_equation) < 0)
-	     fprintf(stderr, "ERROR: Computes methode_euler_explicite\n");
-
-     	if (methode_euler_simpletique(dt, t, &tmp, &y_EMs, stiff_equation) < 0)
-	     fprintf(stderr, "ERROR: Computes methode_euler_simpletique\n");
-
-	if (methode_RK4(dt, t, &tmp, &y_RK4, stiff_equation) < 0)
-	     fprintf(stderr, "ERROR: Computes methode_RK4\n");
-
-	if (methode_RK(dt, t, &tmp, &y_RK, stiff_equation) < 0)
-	     fprintf(stderr, "ERROR: Computes methode_RK\n");
-
-	if (methode_Verlet(dt, t, &tmp, &y_VT, stiff_equation) < 0)
-	     fprintf(stderr, "ERROR: Computes methode_Verlet\n");
-
-	t += dt;
+    // Exact solution don't need y variable
+    for (double step = 0, t = 0; step < (int)1.f/dt; step++, t += dt) {
+	t_buff[0][(int)step] = t;
+	if (method[0](dt, t, &tmp, &y_buff[0][(int)step], stiff_equation) < 0)
+	    fprintf(stderr, "ERROR: Computes methode_euler_simpletique\n");
     }
 
-    printf("\nThe Last method is sepered because it change the time\n");
+    // All other method except DOPRI45
+    for (int i = 1; i < 6; i++) {
+	for (double step = 0, t = 0, y = 1; step < (int)1.f/dt; step++, t += dt) {
+	    t_buff[i][(int)step] = t;
+	    y_buff[i][(int)step] = y;
+	    if (method[i](dt, t, &tmp, &y, stiff_equation) < 0)
+	        fprintf(stderr, "ERROR: Computes methode_euler_simpletique\n");
+	}
+    }
 
-    for (int step = 0; step < (int)1.f/dt; step++) {
-	printf("%lf,%lf\n", t2, y_DOPRI45);
-
-	if (methode_DOPRI45(dt, &t2, 0.01, &tmp, &y_DOPRI45, stiff_equation) < 0)
+    // DOPRI45 modify the time itself to obtain a better accuracy
+    for (double step = 0, t = 0, y = 1; step < (int)1.f/dt; step++) {
+	t_buff[6][(int)step] = t;
+	y_buff[6][(int)step] = y;
+	if (methode_DOPRI45(dt, &t, 0.001, &tmp, &y, stiff_equation) < 0)
 	     fprintf(stderr, "ERROR: Computes methode_DOPRI45\n");
-
     }
-    /*
-    file = fopen(".csv", "w");
-    fprintf(stderr, "ERROR: Failed to write file\n");
 
-    fprintf(file, "%lf,%.3f,%.3f\n", t, E_TOT_1, E_TOT_2);
 
-    fcolse(file)
-    */
+    // Show or save the work
+    for (int i = 0; i < 7; i++) {
+	if (save_file == 1) {
+	    char file_name[50];
+	    sprintf(file_name, "results/%s.csv", all_names_methods[i]);
+	    streamout = fopen(file_name, "w");
+	    if (streamout == NULL) {
+    		fprintf(stderr, "ERROR: Failed to write file: %s\n", file_name);
+		exit(1);
+	    }
+	}
+
+        printf("\n%s:\n", all_names_methods[i]);
+
+	for (int step = 0; step < (int)1.f/dt; step++)
+	    fprintf(streamout, "%lf,%lf\n", t_buff[i][step], y_buff[i][step]);
+	if (save_file == 1) fclose(streamout);
+    }
+
     return 0;
 }

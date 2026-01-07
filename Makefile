@@ -1,4 +1,5 @@
 CC = gcc
+MD = mkdir -p
 RM = rm -rf
 
 CFLAGS +=	\
@@ -6,10 +7,15 @@ CFLAGS +=	\
 -Wall   	\
 -lm   		\
 
+SAVE_FILE := results
+
 .PHONY: clean static dyn
 
-static: main.c | libODEsolver.a
-	gcc main.c -o main -L. -lODEsolver $(CFLAGS)
+$(SAVE_FILE):
+	$(MD) $(SAVE_FILE)
+
+static: main.c | libODEsolver.a $(SAVE_FILE)
+	$(CC) main.c -o main -L. -lODEsolver $(CFLAGS)
 
 libODEsolver.a: ODEsolver.c
 	$(CC) $(CFLAGS) -c ODEsolver.c
@@ -20,8 +26,8 @@ libODEsolver.a: ODEsolver.c
 # Pour lancer le main si pas "-Wl,-rpath=./"
 # LD_LIBRARY_PATH="./" ./main
 
-dyn: main.c | libODEsolver.so
-	gcc main.c -o main $(CFLAGS) -L. -lODEsolver -Wl,-rpath=./
+dyn: main.c | libODEsolver.so $(SAVE_FILE)
+	$(CC) main.c -o main $(CFLAGS) -L. -lODEsolver -Wl,-rpath=./
 
 
 libODEsolver.so: ODEsolver.c
@@ -31,4 +37,5 @@ clean:
 	$(RM) *.o
 	$(RM) *.a
 	$(RM) *.so
+	$(RM) save/*.csv
 	$(RM) main
