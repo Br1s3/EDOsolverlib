@@ -1,7 +1,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "ODEsolver.h"
+
+
+#if defined(PROG1)
+#    define LIBODESOLVER_IMPLEMENTATION
+#    include "libODEsolver.h"
+#elif defined(PROG2)
+#    include "libODEsolver.h"
+#else
+#    include "ODEsolver.h"
+#endif
 
 /* Stress test of EDO solver with stiff equation
 A stiff equation is an equation that resemble to:
