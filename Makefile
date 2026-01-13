@@ -9,19 +9,23 @@ CFLAGS +=	\
 
 SAVE_FILE := results
 
-COMPMODE ?= P1
+MODE ?= P1
 
 
 .PHONY: header obj static dynamic clean
 
 
-header: main | $(SAVE_FILE)
+header:
+	@$(MAKE) --no-print-directory MODE=P1 main
 
-obj: main | libODEsolver.o $(SAVE_FILE)
+obj: 
+	@$(MAKE) --no-print-directory MODE=P2 main
 
-dynamic: main | libODEsolver.so $(SAVE_FILE)
+dynamic:
+	@$(MAKE) --no-print-directory MODE=PD main
 
-static: main | libODEsolver.a $(SAVE_FILE)
+static:
+	@$(MAKE) --no-print-directory MODE=PS main
 
 
 # test: libODEsolver.h ODEsolver.h | ODEsolver.c
@@ -29,7 +33,7 @@ static: main | libODEsolver.a $(SAVE_FILE)
 
 
 libODEsolver.o: libODEsolver.h
-	$(CC) -DLIBIMAGEFILE_IMPLEMENTATION -x c -c $<
+	$(CC) -DLIBODESOLVER_IMPLEMENTATION -x c -c $<
 
 libODEsolver.so: ODEsolver.c
 	$(CC) $(CFLAGS) -DPROG3 -fPIC -shared -o $@ $<
@@ -42,17 +46,20 @@ libODEsolver.a: ODEsolver.o
 ODEsolver.o: ODEsolver.c
 	$(CC) $(CFLAGS) -c $<
 
-main: main.c
-ifeq ($(COMPMODE), P1)
+ifeq ($(MODE), P1)
+main: main.c | $(SAVE_FILE)
 	@echo Simple compilation of programs
 	$(CC) $< -o $@ -DPROG1 $(CFLAGS)
-else ifeq ($(COMPMODE), P2)
+else ifeq ($(MODE), P2)
+main: main.c libODEsolver.o | $(SAVE_FILE)
 	@echo Compile with obj lib
 	$(CC) $< libODEsolver.o -o $@ -DPROG2 $(CFLAGS)
-else ifeq ($(COMPMODE), PD)
+else ifeq ($(MODE), PD)
+main: main.c libODEsolver.so | $(SAVE_FILE)
 	@echo Compile the dynamique library
-	$(CC) $< -o $@ -DPROG3 $(CFLAGS) -L. -libODEsolver -Wl,-rpath=./
-else ifeq ($(COMPMODE), PS)
+	$(CC) $< -o $@ -DPROG3 $(CFLAGS) -L. -lODEsolver -Wl,-rpath=./
+else ifeq ($(MODE), PS)
+main: main.c libODEsolver.a | $(SAVE_FILE)
 	@echo Compile the static library
 	$(CC) $< -o $@ -L. -lODEsolver -DPROG4 $(CFLAGS)
 else
